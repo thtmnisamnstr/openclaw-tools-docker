@@ -14,25 +14,6 @@ docker pull ghcr.io/thtmnisamnstr/openclaw-tools-docker:latest
 
 Version tags match the OpenClaw version inside the container. The latest tag is only published after both native architecture builds and smoke tests succeed.
 
-## Run on OCI
-
-Keep your existing auth configuration and bind-mounted application data. Example for Gavin, after backing up your state and removing the previous stopped container:
-
-```sh
-docker run -d --name openclaw-gavin --restart=always \
-  -p 127.0.0.1:9000:18789 \
-  -v /mnt/nextcloud_vol/openclaw-gavin:/home/node/.openclaw \
-  -v openclaw-gavin-local:/home/node/.local \
-  -v openclaw-gavin-brew:/home/linuxbrew/.linuxbrew \
-  ghcr.io/thtmnisamnstr/openclaw-tools-docker:2026.10.8
-```
-
-For `openclaw-rc`, retain her separate application data and host port, and use separate `-local` and `-brew` named volumes.
-
-Plugins/skills stored in `/home/node/.openclaw` remain across replacement. Tools installed under `/home/node/.local` and `/home/linuxbrew/.linuxbrew` persist in the extra named volumes. For a first-time volume, Docker normally copies image content into that volume. Other custom install paths may require their own persistence.
-
-**Do not publish the gateway port externally** if nginx is providing trusted-proxy authentication. Keep the host binding on `127.0.0.1`.
-
 ## Builds and updates
 
 The GitHub Actions workflow on `main` builds the latest stable upstream OpenClaw release on native GitHub Actions runners (`ubuntu-24.04` AMD64 and `ubuntu-24.04-arm` ARM64), smoke-tests the packaged tools and embedded OpenClaw version, then publishes a combined GHCR multi-architecture image under `:<upstream version>` and `:latest`.
