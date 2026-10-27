@@ -45,7 +45,7 @@ MIT license for this repository's files; upstream components retain their respec
 The image sets PATH for Homebrew, npm globals, uv/pipx tools and Go binaries.
 OpenClaw can rebuild PATH when launching an exec shell, so image ENV alone is
 not sufficient. `/usr/local/bin/brew` links to
-`/home/linuxbrew/.linuxbrew/bin/brew`, outside the mounted home directories.
+`/home/linuxbrew/.linuxbrew/Homebrew/bin/brew`, outside the mounted home directories.
 Configure the following in each instance's private `openclaw.json` as well:
 
 ```json

@@ -32,7 +32,7 @@ check='set -euo pipefail
   # Reproduce the minimal PATH used by a host exec service.
   env PATH=/usr/local/bin:/usr/bin:/bin bash -ec '\''
     test "$(command -v brew)" = /usr/local/bin/brew
-    test "$(readlink /usr/local/bin/brew)" = /home/linuxbrew/.linuxbrew/bin/brew
+    test "$(readlink /usr/local/bin/brew)" = /home/linuxbrew/.linuxbrew/Homebrew/bin/brew
     brew --version
   '\''
   # OpenClaw applies pathPrepend after shell startup. Test that prefix explicitly.
