@@ -107,3 +107,6 @@ tests/smoke.sh openclaw-tools:2026.10.8 2026.10.8
 ```
 
 Pull requests build and test both architectures without publishing images.
+
+For a manual validation run, dispatch the workflow with `validate_only=true`.
+This builds and tests both architectures without publishing or creating a release.
