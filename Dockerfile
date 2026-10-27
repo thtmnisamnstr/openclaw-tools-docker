@@ -63,4 +63,10 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
     python3 --version && go version && cargo --version && \
     npm --version && pnpm --version
 
+# OpenClaw exec may reconstruct a minimal PATH without image ENV entries.
+# Keep this link outside /home so it survives per-instance home bind mounts.
+USER root
+RUN ln -s /home/linuxbrew/.linuxbrew/bin/brew /usr/local/bin/brew
+USER node
+
 # Preserve official ENTRYPOINT, CMD, HEALTHCHECK and installed Chromium.
