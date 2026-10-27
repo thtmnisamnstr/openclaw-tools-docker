@@ -7,9 +7,9 @@ An unofficial, browser-enabled OpenClaw gateway based on the official **versione
 ## Pull
 
 ```sh
-docker pull ghcr.io/thtmnisamnstr/openclaw-tools-docker:2026.10.8
+docker pull ghcr.io/thtmnisamnstr/openclaw-tools:2026.10.8
 # Or the newest successfully published stable image:
-docker pull ghcr.io/thtmnisamnstr/openclaw-tools-docker:latest
+docker pull ghcr.io/thtmnisamnstr/openclaw-tools:latest
 ```
 
 Version tags match the OpenClaw version inside the container. The latest tag is only published after both native architecture builds and smoke tests succeed.
@@ -35,7 +35,7 @@ The workflow needs GitHub Actions permission to write packages and repository co
 ## Build locally
 
 ```sh
-docker build --build-arg OPENCLAW_VERSION=2026.10.8 -t openclaw-tools-docker:2026.10.8 .
+docker build --build-arg OPENCLAW_VERSION=2026.10.8 -t openclaw-tools:2026.10.8 .
 ```
 
 MIT license for this repository's files; upstream components retain their respective licenses.

@@ -70,7 +70,7 @@ jobs:
           VERSION: ${{ needs.resolve-version.outputs.version }}
           ARCH: ${{ matrix.arch }}
           PLATFORM: ${{ matrix.platform }}
-          IMAGE: ghcr.io/${{ github.repository }}
+          IMAGE: ghcr.io/thtmnisamnstr/openclaw-tools
         run: |
           set -euo pipefail
           IMAGE="${IMAGE,,}"
@@ -82,7 +82,7 @@ jobs:
         env:
           VERSION: ${{ needs.resolve-version.outputs.version }}
           ARCH: ${{ matrix.arch }}
-          IMAGE: ghcr.io/${{ github.repository }}
+          IMAGE: ghcr.io/thtmnisamnstr/openclaw-tools
         run: |
           set -euo pipefail
           IMAGE="${IMAGE,,}"
@@ -103,7 +103,7 @@ jobs:
         env:
           VERSION: ${{ needs.resolve-version.outputs.version }}
           ARCH: ${{ matrix.arch }}
-          IMAGE: ghcr.io/${{ github.repository }}
+          IMAGE: ghcr.io/thtmnisamnstr/openclaw-tools
         run: |
           set -euo pipefail
           IMAGE="${IMAGE,,}"
@@ -127,7 +127,7 @@ jobs:
       - name: Assemble version and latest multi-architecture images
         env:
           VERSION: ${{ needs.resolve-version.outputs.version }}
-          IMAGE: ghcr.io/${{ github.repository }}
+          IMAGE: ghcr.io/thtmnisamnstr/openclaw-tools
         run: |
           set -euo pipefail
           IMAGE="${IMAGE,,}"
@@ -141,7 +141,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.resolve-version.outputs.version }}
-          IMAGE: ghcr.io/${{ github.repository }}
+          IMAGE: ghcr.io/thtmnisamnstr/openclaw-tools
         run: |
           set -euo pipefail
           IMAGE="${IMAGE,,}"
