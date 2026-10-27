@@ -39,3 +39,74 @@ docker build --build-arg OPENCLAW_VERSION=2026.10.8 -t openclaw-tools:2026.10.8 
 ```
 
 MIT license for this repository's files; upstream components retain their respective licenses.
+
+## Tool discovery in OpenClaw exec
+
+The image sets PATH for Homebrew, npm globals, uv/pipx tools and Go binaries.
+OpenClaw can rebuild PATH when launching an exec shell, so image ENV alone is
+not sufficient. `/usr/local/bin/brew` links to
+`/home/linuxbrew/.linuxbrew/Homebrew/bin/brew`, outside the mounted home directories.
+Configure the following in each instance's private `openclaw.json` as well:
+
+```json
+{
+  "tools": {
+    "exec": {
+      "pathPrepend": [
+        "/home/linuxbrew/.linuxbrew/bin",
+        "/home/linuxbrew/.linuxbrew/sbin",
+        "/home/node/.local/bin",
+        "/home/node/.local/share/npm/bin",
+        "/home/node/.openclaw/tooling/go/bin"
+      ]
+    }
+  }
+}
+```
+
+Merge this setting with existing configuration; do not replace the entire file.
+For an existing gateway container (replace `YOUR_CONTAINER`):
+
+```sh
+docker exec --user node YOUR_CONTAINER node /app/openclaw.mjs config set \
+  tools.exec.pathPrepend \
+  '["/home/linuxbrew/.linuxbrew/bin","/home/linuxbrew/.linuxbrew/sbin","/home/node/.local/bin","/home/node/.local/share/npm/bin","/home/node/.openclaw/tooling/go/bin"]' --strict-json
+```
+
+Restart the container if needed to apply the setting. A restart does not load a
+new image; recreate the container after pulling to pick up the symlink change.
+Validate through an actual OpenClaw chat exec request, not just `docker exec`:
+
+```sh
+command -v brew uv uvx bun go cargo python3 npm pnpm
+brew --version
+```
+
+See [OpenClaw exec configuration](https://docs.openclaw.ai/tools/bash).
+This config targets gateway/sandbox exec; remote node hosts need their own service
+PATH. Separate sandbox images must contain the tools themselves.
+
+## Persistent home directories
+
+For installations using bind mounts, keep separate per-instance host directories
+for `/home/node` and `/home/linuxbrew`, plus the existing nested state bind at
+`/home/node/.openclaw`. Never share these homes between users: they can contain
+credentials as well as installed tools. Bind mounts do **not** seed themselves
+from image contents. Before first use, seed empty directories from the image,
+preserving ownership. Do not mount an empty home over a working installation or
+overwrite populated homes during upgrades. Existing homes retain their installed
+tool versions when the image changes.
+
+The CI smoke test runs as `node`, checks minimal-PATH brew discovery, exercises a
+login shell with the configured prefix, and repeats checks with seeded home bind
+mounts and a separate state mount. It tests shell discovery, not a live model or
+OpenClaw agent session. To run it locally after building:
+
+```sh
+tests/smoke.sh openclaw-tools:2026.10.8 2026.10.8
+```
+
+Pull requests build and test both architectures without publishing images.
+
+For a manual validation run, dispatch the workflow with `validate_only=true`.
+This builds and tests both architectures without publishing or creating a release.
