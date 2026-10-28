@@ -12,6 +12,12 @@ trap cleanup EXIT
 
 check='set -euo pipefail
   test "$(id -un)" = node
+  glibc_version="$(getconf GNU_LIBC_VERSION | cut -d" " -f2)"
+  echo "glibc version: $glibc_version"
+  dpkg --compare-versions "$glibc_version" ge 2.38
+  chromium="$(node -p "require(\"playwright-core\").chromium.executablePath()")"
+  "$chromium" --version
+  timeout 30s "$chromium" --headless --no-sandbox --disable-gpu --dump-dom about:blank | grep -F "<html>"
   for tool in node npm pnpm brew uv uvx bun bunx go cargo rustc python3 pipx jq yq ffmpeg pdftotext fd; do
     command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 1; }
   done

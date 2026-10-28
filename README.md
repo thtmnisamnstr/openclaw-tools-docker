@@ -32,6 +32,29 @@ The workflow needs GitHub Actions permission to write packages and repository co
 - Installing third-party skills can execute code. Avoid privileged containers and host Docker-socket mounts.
 - Existing models, agents, and credentials must remain in the state volume.
 
+## Runtime compatibility
+
+The image upgrades the official Bookworm-based browser image to Debian 13
+(Trixie), including glibc 2.41 and its matching system libraries. Upstream images
+already using Trixie skip the distribution upgrade. OpenClaw remains at the
+selected stable version, and the official startup settings are inherited.
+
+This meets the glibc 2.38 minimum for OpenClaw managed llama-server on Linux
+arm64. Builds reject older glibc, and both architecture smoke tests check glibc
+and launch headless Chromium in addition to checking the packaged tools.
+This verifies the runtime prerequisite; it does not exercise model downloads or
+inference.
+
+After pulling a rebuilt image, recreate the gateway container with its existing
+home and state volumes; restarting an existing container does not update its
+system libraries. Check the running container (replace `YOUR_CONTAINER`):
+
+```sh
+docker exec YOUR_CONTAINER getconf GNU_LIBC_VERSION
+```
+
+Expect `glibc 2.41` or newer. The Docker host does not need a glibc upgrade.
+
 ## Build locally
 
 ```sh

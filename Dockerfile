@@ -14,6 +14,24 @@ LABEL org.opencontainers.image.title="OpenClaw Tools Docker" \
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Stable OpenClaw 2026.10.8 uses Bookworm (glibc 2.36). Upgrade the whole
+# Debian runtime together; managed llama-server on arm64 requires glibc >= 2.38.
+# Retain the official OpenClaw/browser files and image startup metadata.
+RUN . /etc/os-release && \
+    case "$VERSION_CODENAME" in \
+      bookworm) \
+        apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
+        sed -i 's/bookworm/trixie/g' /etc/apt/sources.list.d/debian.sources && \
+        apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --without-new-pkgs && \
+        DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y ;; \
+      trixie) : ;; \
+      *) echo "Unsupported upstream Debian release: $VERSION_CODENAME" >&2; exit 1 ;; \
+    esac && \
+    dpkg --compare-versions "$(getconf GNU_LIBC_VERSION | cut -d' ' -f2)" ge 2.38 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       bash ca-certificates curl wget git git-lfs gnupg \
