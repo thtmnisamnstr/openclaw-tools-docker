@@ -67,8 +67,8 @@ MIT license for this repository's files; upstream components retain their respec
 
 The image sets PATH for Homebrew, npm globals, uv/pipx tools and Go binaries.
 OpenClaw can rebuild PATH when launching an exec shell, so image ENV alone is
-not sufficient. `/usr/local/bin/brew` links to
-`/home/linuxbrew/.linuxbrew/Homebrew/bin/brew`, outside the mounted home directories.
+not sufficient. `/usr/local/bin/brew` is a small wrapper that starts Homebrew
+through `/home/linuxbrew/.linuxbrew/bin/brew`, outside the mounted home directories.
 Configure the following in each instance's private `openclaw.json` as well:
 
 ```json
@@ -97,7 +97,7 @@ docker exec --user node YOUR_CONTAINER node /app/openclaw.mjs config set \
 ```
 
 Restart the container if needed to apply the setting. A restart does not load a
-new image; recreate the container after pulling to pick up the symlink change.
+new image; recreate the container after pulling to pick up the wrapper change.
 Validate through an actual OpenClaw chat exec request, not just `docker exec`:
 
 ```sh
