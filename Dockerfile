@@ -1,10 +1,14 @@
 # syntax=docker/dockerfile:1
 ARG OPENCLAW_VERSION=2026.10.8
+ARG CLAUDE_CODE_VERSION=2.1.318
+ARG CODEX_VERSION=0.166.0
 FROM ghcr.io/astral-sh/uv:latest AS uv
 FROM oven/bun:1 AS bun
 FROM ghcr.io/openclaw/openclaw:${OPENCLAW_VERSION}-browser
 
 ARG OPENCLAW_VERSION
+ARG CLAUDE_CODE_VERSION
+ARG CODEX_VERSION
 LABEL org.opencontainers.image.title="OpenClaw Tools Docker" \
       org.opencontainers.image.description="OpenClaw browser image with Linux skill and plugin dependencies" \
       org.opencontainers.image.source="https://github.com/thtmnisamnstr/openclaw-tools-docker" \
@@ -58,7 +62,8 @@ COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx && \
     ln -s /usr/bin/fdfind /usr/local/bin/fd
 
-RUN install -d -o node -g node -m 0755 /home/linuxbrew && \
+RUN install -d -o node -g node -m 0755 /opt/openclaw-tools/coding-agent && \
+    install -d -o node -g node -m 0755 /home/linuxbrew && \
     install -d -o node -g node -m 0755 /home/linuxbrew/.linuxbrew && \
     install -d -o node -g node -m 0755 /home/node/.local && \
     install -d -o node -g node -m 0755 /home/node/.local/bin && \
@@ -73,9 +78,21 @@ ENV HOME=/home/node \
     UV_TOOL_BIN_DIR=/home/node/.local/bin \
     GOPATH=/home/node/.openclaw/tooling/go \
     BUN_INSTALL_BIN=/home/node/.local/bin
-ENV PATH="/usr/local/bin:/home/node/.local/bin:/home/node/.local/share/npm/bin:/home/node/.openclaw/tooling/go/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+ENV PATH="/usr/local/bin:/opt/openclaw-tools/coding-agent/bin:/home/node/.local/bin:/home/node/.local/share/npm/bin:/home/node/.openclaw/tooling/go/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 USER node
+# The OpenClaw skill installer intentionally uses --ignore-scripts for safety.
+# Claude Code and Codex require their trusted npm lifecycle scripts and optional
+# platform packages to install their native Linux binaries, so install and test
+# the pinned packages while building this image instead.
+RUN npm install --global --prefix /opt/openclaw-tools/coding-agent \
+      --no-audit --no-fund --include=optional \
+      --allow-scripts=@anthropic-ai/claude-code \
+      "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+      "@openai/codex@${CODEX_VERSION}" && \
+    claude --version && \
+    codex --version
+
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
     brew --version && uv --version && uvx --version && bun --version && \
     python3 --version && go version && cargo --version && \
@@ -88,7 +105,9 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
 USER root
 RUN printf '%s\n' '#!/bin/sh' 'exec /home/linuxbrew/.linuxbrew/bin/brew "$@"' \
       > /usr/local/bin/brew && \
-    chmod 0755 /usr/local/bin/brew
+    chmod 0755 /usr/local/bin/brew && \
+    ln -s /opt/openclaw-tools/coding-agent/bin/claude /usr/local/bin/claude && \
+    ln -s /opt/openclaw-tools/coding-agent/bin/codex /usr/local/bin/codex
 USER node
 
 # Preserve official ENTRYPOINT, CMD, HEALTHCHECK and installed Chromium.

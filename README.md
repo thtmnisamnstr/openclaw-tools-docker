@@ -2,7 +2,7 @@
 
 An unofficial, browser-enabled OpenClaw gateway based on the official **versioned OpenClaw browser image**, with common Linux dependencies needed for installing skills and plugins through the web UI.
 
-**Included:** Homebrew (Linuxbrew), uv/uvx, Bun, Python/pipx, Go, Rust/Cargo, npm/pnpm (upstream), git, compilers, FFmpeg, ImageMagick, Pandoc, OCR, PDF tools, and network/database utilities. Built for both **linux/amd64** and **linux/arm64**.
+**Included:** Claude Code, Codex, Homebrew (Linuxbrew), uv/uvx, Bun, Python/pipx, Go, Rust/Cargo, npm/pnpm (upstream), git, compilers, FFmpeg, ImageMagick, Pandoc, OCR, PDF tools, and network/database utilities. Built for both **linux/amd64** and **linux/arm64**.
 
 ## Pull
 
@@ -62,6 +62,32 @@ docker build --build-arg OPENCLAW_VERSION=2026.10.8 -t openclaw-tools:2026.10.8 
 ```
 
 MIT license for this repository's files; upstream components retain their respective licenses.
+
+## Coding-agent skill
+
+Claude Code and Codex are installed and version-checked as part of the image
+build. They are exposed through `/usr/local/bin`, so OpenClaw's coding-agent
+skill can find them even when gateway exec uses a minimal PATH and even when
+`/home/node` is bind-mounted from the host.
+
+Do not use the coding-agent skill's **Install Claude** or **Install Codex**
+buttons with this image. OpenClaw intentionally invokes Node skill installers
+with lifecycle scripts disabled; both packages need their lifecycle scripts and
+platform-specific optional dependencies to install working native binaries.
+The image installs those pinned, trusted packages during its build, explicitly
+allowing Claude Code's post-install script, and its smoke tests run both
+`claude --version` and `codex --version` on AMD64 and ARM64.
+
+Authentication remains per gateway and persists in the mounted `/home/node`
+directory. After recreating the container with a newly published image, enable
+the coding-agent skill if needed and authenticate the CLI you intend to use:
+
+```sh
+docker exec -it --user node YOUR_CONTAINER claude
+# or
+docker exec -it --user node YOUR_CONTAINER sh -lc \
+  'CODEX_HOME="$HOME/.codex-coding-agent" codex login --device-auth'
+```
 
 ## Tool discovery in OpenClaw exec
 
