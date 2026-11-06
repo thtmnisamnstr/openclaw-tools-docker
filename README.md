@@ -2,7 +2,7 @@
 
 An unofficial, browser-enabled OpenClaw gateway based on the official **versioned OpenClaw browser image**, with common Linux dependencies needed for installing skills and plugins through the web UI.
 
-**Included:** Homebrew (Linuxbrew), uv/uvx, Bun, Python/pipx, Go, Rust/Cargo, npm/pnpm (upstream), git, compilers, FFmpeg, ImageMagick, Pandoc, OCR, PDF tools, and network/database utilities. Built for both **linux/amd64** and **linux/arm64**.
+**Included:** Claude Code, Codex, Homebrew (Linuxbrew), uv/uvx, Bun, Python/pipx, Go, Rust/Cargo, npm/pnpm (upstream), git, compilers, FFmpeg, ImageMagick, Pandoc, OCR, PDF tools, and network/database utilities. Built for both **linux/amd64** and **linux/arm64**.
 
 ## Pull
 
@@ -13,6 +13,35 @@ docker pull ghcr.io/thtmnisamnstr/openclaw-tools:latest
 ```
 
 Version tags match the OpenClaw version inside the container. The latest tag is only published after both native architecture builds and smoke tests succeed.
+
+## Getting started
+
+For a private local Gateway, create persistent Docker volumes and start the
+container. This keeps OpenClaw state, browser logins, and installed user tools
+across container replacements.
+
+```sh
+docker volume create openclaw-state
+docker volume create openclaw-home
+docker volume create openclaw-linuxbrew
+
+docker run -d \
+  --name openclaw \
+  --restart unless-stopped \
+  --init \
+  --shm-size=1g \
+  -p 127.0.0.1:18789:18789 \
+  -v openclaw-state:/home/node/.openclaw \
+  -v openclaw-home:/home/node \
+  -v openclaw-linuxbrew:/home/linuxbrew \
+  ghcr.io/thtmnisamnstr/openclaw-tools:latest
+```
+
+Open <http://localhost:18789> and complete OpenClaw's setup. Check that it is
+running with `docker logs -f openclaw`. The loopback-only port keeps the Gateway
+private to the Docker host; put it behind authenticated HTTPS before exposing it
+remotely. To upgrade later, pull the new image, remove only the container, and
+rerun the same command—the named volumes remain intact.
 
 ## Builds and updates
 
@@ -62,6 +91,32 @@ docker build --build-arg OPENCLAW_VERSION=2026.10.8 -t openclaw-tools:2026.10.8 
 ```
 
 MIT license for this repository's files; upstream components retain their respective licenses.
+
+## Coding-agent skill
+
+Claude Code and Codex are installed and version-checked as part of the image
+build. They are exposed through `/usr/local/bin`, so OpenClaw's coding-agent
+skill can find them even when gateway exec uses a minimal PATH and even when
+`/home/node` is bind-mounted from the host.
+
+Do not use the coding-agent skill's **Install Claude** or **Install Codex**
+buttons with this image. OpenClaw intentionally invokes Node skill installers
+with lifecycle scripts disabled; both packages need their lifecycle scripts and
+platform-specific optional dependencies to install working native binaries.
+The image installs those pinned, trusted packages during its build, explicitly
+allowing Claude Code's post-install script, and its smoke tests run both
+`claude --version` and `codex --version` on AMD64 and ARM64.
+
+Authentication remains per gateway and persists in the mounted `/home/node`
+directory. After recreating the container with a newly published image, enable
+the coding-agent skill if needed and authenticate the CLI you intend to use:
+
+```sh
+docker exec -it --user node YOUR_CONTAINER claude
+# or
+docker exec -it --user node YOUR_CONTAINER sh -lc \
+  'CODEX_HOME="$HOME/.codex-coding-agent" codex login --device-auth'
+```
 
 ## Tool discovery in OpenClaw exec
 

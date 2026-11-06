@@ -18,7 +18,7 @@ check='set -euo pipefail
   chromium="$(node -p "require(\"playwright-core\").chromium.executablePath()")"
   "$chromium" --version
   timeout 30s "$chromium" --headless --no-sandbox --disable-gpu --dump-dom about:blank | grep -F "<html>"
-  for tool in node npm pnpm brew uv uvx bun bunx go cargo rustc python3 pipx jq yq ffmpeg pdftotext fd; do
+  for tool in node npm pnpm claude codex brew uv uvx bun bunx go cargo rustc python3 pipx jq yq ffmpeg pdftotext fd; do
     command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 1; }
   done
   brew --version
@@ -30,6 +30,8 @@ check='set -euo pipefail
   cargo --version
   npm --version
   pnpm --version
+  claude --version
+  codex --version
   actual="$(node /app/openclaw.mjs --version)"
   echo "OpenClaw version: $actual"
   grep -F "$EXPECTED_OPENCLAW_VERSION" <<< "$actual" >/dev/null
@@ -41,12 +43,16 @@ check='set -euo pipefail
     test ! -L /usr/local/bin/brew
     test "$(brew --prefix)" = /home/linuxbrew/.linuxbrew
     brew --version
+    test "$(command -v claude)" = /usr/local/bin/claude
+    test "$(command -v codex)" = /usr/local/bin/codex
+    claude --version
+    codex --version
   '\''
   # OpenClaw applies pathPrepend after shell startup. Test that prefix explicitly.
   bash -lc '\''
     export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/node/.local/bin:/home/node/.local/share/npm/bin:/home/node/.openclaw/tooling/go/bin:$PATH"
     brew --version
-    command -v uv uvx bun go cargo python3 npm pnpm
+    command -v claude codex uv uvx bun go cargo python3 npm pnpm
   '\''
 '
 run_check() {
