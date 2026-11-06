@@ -14,6 +14,35 @@ docker pull ghcr.io/thtmnisamnstr/openclaw-tools:latest
 
 Version tags match the OpenClaw version inside the container. The latest tag is only published after both native architecture builds and smoke tests succeed.
 
+## Getting started
+
+For a private local Gateway, create persistent Docker volumes and start the
+container. This keeps OpenClaw state, browser logins, and installed user tools
+across container replacements.
+
+```sh
+docker volume create openclaw-state
+docker volume create openclaw-home
+docker volume create openclaw-linuxbrew
+
+docker run -d \
+  --name openclaw \
+  --restart unless-stopped \
+  --init \
+  --shm-size=1g \
+  -p 127.0.0.1:18789:18789 \
+  -v openclaw-state:/home/node/.openclaw \
+  -v openclaw-home:/home/node \
+  -v openclaw-linuxbrew:/home/linuxbrew \
+  ghcr.io/thtmnisamnstr/openclaw-tools:latest
+```
+
+Open <http://localhost:18789> and complete OpenClaw's setup. Check that it is
+running with `docker logs -f openclaw`. The loopback-only port keeps the Gateway
+private to the Docker host; put it behind authenticated HTTPS before exposing it
+remotely. To upgrade later, pull the new image, remove only the container, and
+rerun the same command—the named volumes remain intact.
+
 ## Builds and updates
 
 The GitHub Actions workflow on `main` builds the latest stable upstream OpenClaw release on native GitHub Actions runners (`ubuntu-24.04` AMD64 and `ubuntu-24.04-arm` ARM64), smoke-tests the packaged tools and embedded OpenClaw version, then publishes a combined GHCR multi-architecture image under `:<upstream version>` and `:latest`.
